@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "@google/genai": "^1.29.0",
+    "pdfjs-dist": "^5.4.394",
     "react-router-dom": "^7.9.4"
   }
 }
