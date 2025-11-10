@@ -1,11 +1,15 @@
 // frontend/src/lib/auditParser.js
 
-import fs from "fs";
-import { PDFParse } from "pdf-parse";
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/legacy/build/pdf.worker.min.js?url";
 import { GoogleGenAI } from "@google/genai";
 
-// Load API key from environment variable
-const GEMINI_API_KEY = process.env.GOOGLE_API_KEY;
+// use Vite to load environment variables
+const GEMINI_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+
+// set the worker for pdfjs
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+
 
 /**
     * Calls the Gemini API with the extracted text and a master prompt.
@@ -203,14 +207,23 @@ async function callGeminiApi(auditText) {
     * @param {File} file - The PDF file.
     * @returns {Promise<string>} - A promise resolving to the full text of the PDF.
     */
-export async function extractTextFromPdf(filePath) {
-    const dataBuffer = fs.readFileSync(filePath);
-    const uint8Array = new Uint8Array(dataBuffer);
-    const parser = new PDFParse(uint8Array);
-    const result = await parser.getText();
-    return result.text;
-}
+export async function extractTextFromPdf(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = "";
 
+    console.log(`Extracting ${pdf.numPages} pages...`);
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(" ");
+        console.log(`Page ${i} text length:`, pageText.length);
+        fullText += pageText + "\n";
+    }
+
+    return fullText;
+}
 
 /**
     * Orchestrates the entire parsing pipeline.
