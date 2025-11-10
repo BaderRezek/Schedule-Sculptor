@@ -10,7 +10,7 @@ function Welcome() {
 
   // Check local storage for saved user data
   useEffect(() => {
-    const data = localStorage.getItem('userData');
+    const data = localStorage.getItem('parsedAuditData');
     setHasUserData(!!data);
   }, []);
 

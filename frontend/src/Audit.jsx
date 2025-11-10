@@ -1,7 +1,7 @@
 // Audit.jsx
 /**
- * The Audit page component that allows users to upload their UIC Degree Audit PDF.
- * This component uses the Layout component to maintain consistent styling and structure.
+  * The Audit page component that allows users to upload their UIC Degree Audit PDF.
+  * This component uses the Layout component to maintain consistent styling and structure.
 */
 
 import React, { useState, useEffect } from 'react';
