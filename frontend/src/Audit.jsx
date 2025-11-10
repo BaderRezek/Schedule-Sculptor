@@ -1,41 +1,68 @@
 // Audit.jsx
 /**
- * The Audit page component that allows users to upload their UIC Degree Audit PDF.
- * This component uses the Layout component to maintain consistent styling and structure.
+  * The Audit page component that allows users to upload their UIC Degree Audit PDF.
+  * This component uses the Layout component to maintain consistent styling and structure.
 */
 
 import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
+import { parseAuditPDF } from './lib/auditParser'
 
 function Audit() {
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
+  const [parsedData, setParsedData] = useState(null);
   
+  // Load any previously uploaded file info from localStorage on component mount
   useEffect(() => {
     const storedName = localStorage.getItem('auditFileName');
-    if (storedName) {
+    const storedData = localStorage.getItem('parsedAuditData');
+
+    if (storedName && storedData) {
       setFileName(storedName);
+      setParsedData(JSON.parse(storedData));
+      console.log("Audit: ", storedData);
       setStatus('success');
     }
   }, []);
 
-  const handleFile = (file) => {
-    if (file && file.type === 'application/pdf') {
-      setStatus('processing');
-      // ... rest of your file handling logic
-      // For now, we'll just simulate success
-      setTimeout(() => {
-        localStorage.setItem('auditFileName', file.name);
-        setFileName(file.name);
-        setStatus('success');
-      }, 1000);
-    } else {
+  // Handle file upload and parsing using the audit parser
+  const handleFile = async (file) => {
+    if (!file || file.type !== "application/pdf") {
       setErrorMessage('Please upload a valid PDF file.');
       setStatus('error');
+      return;
+    }
+
+    try {
+      setStatus("processing");
+      setErrorMessage('');
+
+      // save the name of the file
+      setFileName(file.name);
+      localStorage.setItem("auditFileName", file.name);
+
+      // send the file to the audit parser 
+      const parsed = await parseAuditPDF(file);
+      console.log("✅ Audit parsed successfully:", parsed);
+
+      // save the parsed JSON data to state
+      setParsedData(parsed);
+
+      // save parsed data to localStorage
+      localStorage.setItem("parsedAuditData", JSON.stringify(parsed));
+
+      setStatus("success");
+    } catch (error) {
+      // handle any errors during parsing
+      console.error("❌ Audit parsing failed:", error);
+      setErrorMessage("An error occurred while processing the file.");
+      setStatus("error");
     }
   };
 
+  // Drag and drop handlers
   const handleDragOver = (e) => e.preventDefault();
   const handleDrop = (e) => {
     e.preventDefault();
@@ -65,7 +92,7 @@ function Audit() {
   }
 
   const renderDropZoneContent = () => {
-     switch (status) {
+    switch (status) {
       case 'processing':
         return <p className="text-lg text-gray-500">Processing...</p>;
       case 'success':
@@ -79,7 +106,7 @@ function Audit() {
           </div>
         );
       case 'error':
-         return (
+        return (
           <div className="text-center">
             <p className="text-lg font-semibold text-red-600">Error</p>
             <p className="text-sm text-gray-500 mt-1">{errorMessage}</p>

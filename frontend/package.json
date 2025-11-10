@@ -14,7 +14,7 @@
     "dotenv": "^17.2.3",
     "pdf-parse": "^2.4.5",
     "pdfjs": "^2.5.4",
-    "pdfjs-dist": "^5.4.394",
+    "pdfjs-dist": "^2.16.105",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.2"

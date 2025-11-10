@@ -5,7 +5,7 @@ import { parseAuditPDF } from "./auditParser.js";
 
 async function main() {
     try {
-        const pdfPath = "./sample_audit.pdf"; // Path to a sample degree audit PDF
+        const pdfPath = "./test_audit.pdf"; // Path to a sample degree audit PDF
         console.log("Extracting and parsing audit...");
         const result = await parseAuditPDF(pdfPath);
         console.log("✅ Parsed audit result:");
