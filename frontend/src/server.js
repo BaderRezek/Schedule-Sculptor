@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { sophosChat } from "./aiHandler.js";
 
 dotenv.config();
 const app = express();

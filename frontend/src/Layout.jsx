@@ -4,7 +4,7 @@
  * It accepts `children`, which is the unique content for each page.
 */
 
-import React from 'react';
+// import React from 'react';
 import { Link } from 'react-router-dom';
 import greekColumn from './assets/greek-column.png';
 
