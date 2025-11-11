@@ -11,6 +11,7 @@ import Welcome from './Welcome';
 import Audit from './Audit';
 import Dashboard from './Dashboard/Dashboard';
 import AIAssistant from './AIAssistant';
+import SculptSemester from './Sculpt/SculptSemester';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/audit" element={<Audit />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/ai-assistant" element={<AIAssistant />} />
+        <Route path="/sculpt" element={<SculptSemester />} />
       </Routes>
     </Router>
   );

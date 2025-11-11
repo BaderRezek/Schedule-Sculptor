@@ -101,6 +101,10 @@ def load_index():
 
 def retrieve_and_group(query: str, top_courses: int = 8):
     """Retrieve top courses based on query using RAG."""
+    
+    if index is None or model is None:
+        return []
+    
     # Expand query
     q_expanded = expand_query(query)
     
@@ -208,6 +212,11 @@ def query():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    load_index()
-    print("[app] Starting Flask server on http://localhost:5001")
-    app.run(debug=True, port=5001)
+    try: 
+        load_index() 
+    except Exception as e:
+        print(f"[app] Failed to load index: {e}")
+        index = chunks_df = model = config = None
+    
+    print("[app] Starting Flask server on http://localhost:5000")
+    app.run(debug=True, port=5000)

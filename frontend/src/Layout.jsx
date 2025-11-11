@@ -38,7 +38,7 @@ function Layout({ children }) {
             <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
               <Link to="/audit" className="hover:text-purple-800 transition-colors">Upload Audit</Link>
               <Link to="/dashboard" className="hover:text-purple-800 transition-colors">Dashboard</Link>
-              <a href="#" className="hover:text-purple-800 transition-colors">Sculpt your Semester</a>
+              <Link to="/sculpt" className="hover:text-purple-800 transition-colors">Sculpt your Semester</Link>
               <Link to="/ai-assistant" className="hover:text-purple-800 transition-colors">AI Assistant</Link>
             </nav>
             <div className="md:hidden">

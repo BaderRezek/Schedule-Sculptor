@@ -4,7 +4,8 @@
   * This component uses the Layout component to maintain consistent styling and structure.
 */
 
-import React, { useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../Layout';
 import CompletedView from "./CompletedView";
 import InProgressView from "./InProgressView";
@@ -21,16 +22,22 @@ const LegendItem = ({ colorClass, label }) => (
 function Dashboard() {
   const [activeTab, setActiveTab] = useState(null);
   const [parsedData, setParsedData] = useState(null);
+  const navigate = useNavigate();
 
   // load parsed audit data from localStorage
   useEffect(() => {
     const stored = localStorage.getItem('parsedAuditData');
     if (stored) {
       setParsedData(JSON.parse(stored));
+    } else {
+      navigate('/audit');
     }
-  }, []);
+  }, [navigate]);
 
-  // progress data (replace later with real values)
+  // progress data
+  if (!parsedData) {
+    return <Layout><div>Loading...</div></Layout>
+  }
   const progress = parsedData.progress
   const total = progress.totalCreditsRequired
   const completedPercent = (progress.creditsCompleted / total) * 100;
