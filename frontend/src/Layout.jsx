@@ -39,7 +39,7 @@ function Layout({ children }) {
               <Link to="/audit" className="hover:text-purple-800 transition-colors">Upload Audit</Link>
               <Link to="/dashboard" className="hover:text-purple-800 transition-colors">Dashboard</Link>
               <a href="#" className="hover:text-purple-800 transition-colors">Sculpt your Semester</a>
-              <a href="#" className="hover:text-purple-800 transition-colors">AI Assistant</a>
+              <Link to="/ai-assistant" className="hover:text-purple-800 transition-colors">AI Assistant</Link>
             </nav>
             <div className="md:hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
