@@ -10,7 +10,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Welcome from './Welcome';
 import Audit from './Audit';
 import Dashboard from './Dashboard/Dashboard';
-import AIAssistant from './AIAssistant';
+import AIAssistant from './AI/AIAssistant';
 import SculptSemester from './Sculpt/SculptSemester';
 
 function App() {

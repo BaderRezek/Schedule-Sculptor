@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import { sophosChat } from "./aiHandler.js";
 
 dotenv.config();
 const app = express();
@@ -18,7 +19,7 @@ app.get("/", (req, res) => {
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
-    const reply = await sophsosChat(message);
+    const reply = await sophosChat(message);
     res.json({ reply });
   } catch (error) {
     console.error("Error in /chat:", error);
