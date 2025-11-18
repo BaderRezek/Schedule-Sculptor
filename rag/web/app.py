@@ -218,5 +218,5 @@ if __name__ == "__main__":
         print(f"[app] Failed to load index: {e}")
         index = chunks_df = model = config = None
     
-    print("[app] Starting Flask server on http://localhost:5000")
-    app.run(debug=True, port=5000)
+    print("[app] Starting Flask server on http://localhost:5001")
+    app.run(debug=True, port=5001)

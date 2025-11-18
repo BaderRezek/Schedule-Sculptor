@@ -14,6 +14,9 @@ function AIAssistant() {
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
 
+  // Backend base URL comes from Vite env in dev/prod; fallback to Vite proxy path
+  const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
   const handleSearch = async (e) => {
     e.preventDefault();
     
@@ -27,7 +30,7 @@ function AIAssistant() {
     setHasSearched(true);
 
     try {
-      const response = await fetch('http://localhost:5000/query', {
+      const response = await fetch(`${API_BASE}/query`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,7 +48,7 @@ function AIAssistant() {
       const data = await response.json();
       setResults(data.results || []);
     } catch (err) {
-      setError('Unable to connect to the AI Assistant. Make sure the backend is running on port 5000.');
+      setError('Unable to connect to the AI Assistant. Ensure the backend is running and VITE_API_URL (or Vite proxy) points to it.');
       console.error('Search error:', err);
     } finally {
       setLoading(false);
