@@ -8,7 +8,7 @@ Your RAG model is now fully integrated into the Schedule Sculptor app!
    - Loads your FAISS index on startup
    - Exposes `/query` endpoint for course searches
    - Includes query expansion for better results
-   - Running on `http://localhost:5000`
+   - Default dev port: `http://localhost:5001` (configurable)
 
 2. **React Frontend** (`frontend/src/AIAssistant.jsx`)
    - Beautiful themed interface matching your app
@@ -25,7 +25,8 @@ Your RAG model is now fully integrated into the Schedule Sculptor app!
 
 ### Option 1: One Command (Recommended)
 ```bash
-./start.sh
+./start.sh [PORT]
+# e.g. ./start.sh 5001
 ```
 
 ### Option 2: Manual (Two Terminals)
@@ -97,9 +98,11 @@ The AI Assistant matches your app's theme:
 ## 🐛 Troubleshooting
 
 **"Unable to connect to AI Assistant"**
-- Make sure Flask is running: `cd rag/web && python app.py`
+- Make sure Flask is running: `cd rag/web && python app.py` (or use `./start.sh`)
 - Check terminal for errors
-- Verify port 5000 isn't already in use
+- If you see connection refused or unexpected 403 responses, check whether macOS is using the port (AirPlay Receiver sometimes binds to port 5000). Use a different port like 5001: `./start.sh 5001`
+
+If you want to permanently avoid conflicts, run the script with an explicit port and share that convention with collaborators.
 
 **"Import errors" when starting Flask**
 - Install missing packages: `pip install -r rag/web/requirements.txt`

@@ -14,6 +14,7 @@ import faiss
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
+import os
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -212,11 +213,21 @@ def query():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    try: 
-        load_index() 
+    try:
+        load_index()
     except Exception as e:
         print(f"[app] Failed to load index: {e}")
         index = chunks_df = model = config = None
-    
-    print("[app] Starting Flask server on http://localhost:5001")
-    app.run(debug=True, port=5001)
+
+    # Read port from environment so frontend and backend can be started on the same port.
+    # Default to 5001 to avoid common macOS services on 5000.
+    port_env = os.environ.get("RAG_API_PORT") or os.environ.get("PORT") or os.environ.get("RAG_PORT")
+    try:
+        port = int(port_env) if port_env else 5001
+    except ValueError:
+        port = 5001
+
+    host = os.environ.get("RAG_API_HOST", "127.0.0.1")
+    print(f"[app] Starting Flask server on http://{host}:{port}")
+    # Bind to host and port from environment
+    app.run(debug=True, host=host, port=port)

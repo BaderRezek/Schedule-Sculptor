@@ -29,7 +29,8 @@ function AIAssistant() {
     setError('');
     setHasSearched(true);
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  // Use the configured API base (from Vite env or proxy)
+  const API_BASE_URL = API_BASE;
 
     try {
       const response = await fetch(`${API_BASE_URL}/query`, {
@@ -50,7 +51,7 @@ function AIAssistant() {
       const data = await response.json();
       setResults(data.results || []);
     } catch (err) {
-      setError('Unable to connect to the AI Assistant. Ensure the backend is running and VITE_API_URL (or Vite proxy) points to it.');
+  setError(`Unable to connect to the AI Assistant at ${API_BASE_URL}. Ensure the backend is running and VITE_API_URL (or Vite proxy) points to it.`);
       console.error('Search error:', err);
     } finally {
       setLoading(false);

@@ -4,7 +4,7 @@
 The AI Assistant is now integrated into Schedule Sculptor! It uses RAG (Retrieval-Augmented Generation) with FAISS vector search to help students find relevant courses.
 
 ## Architecture
-- **Backend**: Flask API (`rag/web/app.py`) serves the RAG model on port 5000
+- **Backend**: Flask API (`rag/web/app.py`) serves the RAG model (default dev port 5001; configurable via env var RAG_API_PORT)
 - **Frontend**: React component (`frontend/src/AIAssistant.jsx`) provides the UI
 - **Index**: FAISS vector database in `rag/data/processed/index/`
 
@@ -37,7 +37,7 @@ You should see:
 ```
 [app] Loading index from .../rag/data/processed/index...
 [app] Loaded index with X,XXX chunks
-[app] Starting Flask server on http://localhost:5000
+[app] Starting Flask server on http://localhost:5001
 ```
 
 ### 3. Start the React Frontend
@@ -101,7 +101,7 @@ Response:
 ### "Unable to connect to AI Assistant"
 - Make sure Flask is running on port 5000
 - Check that CORS is enabled in `app.py`
-- Verify the frontend is making requests to `http://localhost:5000/query`
+- Verify the frontend is making requests to the correct API URL (default `http://localhost:5001/query` or the value of `VITE_API_URL`)
 
 ### "Missing index files"
 - Ensure you've built the FAISS index first:
