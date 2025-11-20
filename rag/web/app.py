@@ -78,80 +78,45 @@ def expand_query(q: str) -> str:
         return q + " | " + " ; ".join(dict.fromkeys(expansions))
     return q
 
+
 def load_index():
     """Load FAISS index, chunks CSV, and embedding model on startup."""
     global index, chunks_df, model, config
     
     print("🚀 [Backend-Load] Starting index loading...")
     
-    # Get the absolute path of the current script
-    current_file = Path(__file__).resolve()
-    print(f"📁 [Backend-Load] Current script: {current_file}")
-    print(f"📁 [Backend-Load] Current working directory: {Path.cwd()}")
+    # We know the exact location relative to app.py
+    # app.py is in rag/web/ and data is in rag/data/processed/index
+    index_dir = Path(__file__).resolve().parent.parent / "data" / "processed" / "index"
     
-    # Try multiple possible data locations
-    possible_base_dirs = [
-        current_file.parent,  # Directory of app.py
-        Path.cwd(),           # Current working directory
-        Path.cwd() / "web",   # If we're in rag/ but data is in rag/web/
-    ]
+    print(f"📁 [Backend-Load] Looking for data in: {index_dir}")
+    print(f"📁 [Backend-Load] Absolute path: {index_dir.resolve()}")
     
-    possible_data_paths = []
-    for base_dir in possible_base_dirs:
-        possible_data_paths.extend([
-            base_dir / "data" / "processed" / "index",
-            base_dir / "data" / "processed",
-            base_dir / "web" / "data" / "processed", 
-            base_dir / "processed",
-            base_dir,
-        ])
+    if not index_dir.exists():
+        print(f"❌ [Backend-Load] Data directory not found: {index_dir}")
+        raise FileNotFoundError(f"Data directory not found: {index_dir}")
     
-    # Remove duplicates
-    possible_data_paths = list(dict.fromkeys(possible_data_paths))
-    
-    index_dir = None
-    for data_path in possible_data_paths:
-        print(f"🔍 [Backend-Load] Checking: {data_path}")
-        if data_path.exists():
-            # Check if required files exist here
-            idx_file = data_path / "faiss.index"
-            csv_file = data_path / "chunks.csv"
-            cfg_file = data_path / "config.json"
-            
-            if idx_file.exists() and csv_file.exists() and cfg_file.exists():
-                index_dir = data_path
-                print(f"✅ [Backend-Load] Found complete data in: {data_path}")
-                break
-            else:
-                print(f"⚠️  [Backend-Load] Incomplete data in: {data_path}")
-                if data_path.exists():
-                    print(f"📁 [Backend-Load] Files in {data_path}:")
-                    for f in data_path.iterdir():
-                        print(f"   - {f.name}")
-    
-    if index_dir is None:
-        print("❌ [Backend-Load] Could not find complete data files in any location")
-        print("📁 [Backend-Load] Available directories from root:")
-        try:
-            for path in Path(".").rglob("*"):
-                if any(keyword in str(path) for keyword in ["rag", "web", "data", "processed"]):
-                    if path.is_dir():
-                        print(f"   - DIR: {path}")
-                    else:
-                        print(f"   - FILE: {path} ({path.stat().st_size} bytes)")
-        except Exception as e:
-            print(f"❌ [Backend-Load] Error scanning directories: {e}")
-        raise FileNotFoundError("Could not find complete index files")
-    
-    # Now load the files
+    # Check if required files exist
     idx_path = index_dir / "faiss.index"
-    tbl_path = index_dir / "chunks.csv" 
+    tbl_path = index_dir / "chunks.csv"
     cfg_path = index_dir / "config.json"
     
-    print(f"📁 [Backend-Load] Loading from: {index_dir}")
-    print(f"   - faiss.index: {idx_path.exists()} ({idx_path.stat().st_size if idx_path.exists() else 0} bytes)")
-    print(f"   - chunks.csv: {tbl_path.exists()} ({tbl_path.stat().st_size if tbl_path.exists() else 0} bytes)")
-    print(f"   - config.json: {cfg_path.exists()} ({cfg_path.stat().st_size if cfg_path.exists() else 0} bytes)")
+    required_files = {
+        "faiss.index": idx_path,
+        "chunks.csv": tbl_path, 
+        "config.json": cfg_path
+    }
+    
+    missing_files = []
+    for name, path in required_files.items():
+        if not path.exists():
+            missing_files.append(name)
+        else:
+            print(f"✅ [Backend-Load] Found {name}: {path.stat().st_size} bytes")
+    
+    if missing_files:
+        print(f"❌ [Backend-Load] Missing files: {missing_files}")
+        raise FileNotFoundError(f"Missing index files: {missing_files}")
     
     try:
         print("📥 [Backend-Load] Loading FAISS index...")
@@ -161,7 +126,6 @@ def load_index():
         print("📥 [Backend-Load] Loading CSV data...")
         chunks_df = pd.read_csv(tbl_path)
         print(f"✅ [Backend-Load] CSV loaded: {len(chunks_df):,} rows, {len(chunks_df.columns)} columns")
-        print(f"📊 [Backend-Load] CSV columns: {chunks_df.columns.tolist()}")
         
         print("📥 [Backend-Load] Loading config...")
         config = json.loads(cfg_path.read_text())
