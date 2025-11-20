@@ -84,13 +84,14 @@ def load_index():
     
     # Determine index directory path (relative to this file)
     base_path = Path(__file__).resolve().parent
-    index_dir = base_path / "data" / "processed"
+    index_dir = base_path / "data" / "processed" / "index"
     
     idx_path = index_dir / "faiss.index"
     tbl_path = index_dir / "chunks.csv"
     cfg_path = index_dir / "config.json"
     
     if not idx_path.exists() or not tbl_path.exists() or not cfg_path.exists():
+        print(f"[app] Missing index files in {index_dir}")
         raise FileNotFoundError(f"Missing index files in {index_dir}")
     
     print(f"[app] Loading index from {index_dir}...")
