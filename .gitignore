@@ -67,7 +67,6 @@ web_modules/
 
 # dotenv environment variable files
 .env
-.env.*
 !.env.example
 
 # parcel-bundler cache (https://parceljs.org/)
@@ -139,5 +138,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 frontend/src/lib/test_audit.pdf
 
-rag/web/venv
-rag/web/__pycache__
+**/venv/
+rag/web/__pycache__/app.cpython-310.pyc

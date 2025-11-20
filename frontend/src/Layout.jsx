@@ -4,7 +4,7 @@
  * It accepts `children`, which is the unique content for each page.
 */
 
-import React from 'react';
+// import React from 'react';
 import { Link } from 'react-router-dom';
 import greekColumn from './assets/greek-column.png';
 
@@ -38,8 +38,8 @@ function Layout({ children }) {
             <nav className="hidden md:flex items-center space-x-8 text-sm font-medium text-gray-600">
               <Link to="/audit" className="hover:text-purple-800 transition-colors">Upload Audit</Link>
               <Link to="/dashboard" className="hover:text-purple-800 transition-colors">Dashboard</Link>
-              <a href="#" className="hover:text-purple-800 transition-colors">Sculpt your Semester</a>
-              <a href="#" className="hover:text-purple-800 transition-colors">AI Assistant</a>
+              <Link to="/sculpt" className="hover:text-purple-800 transition-colors">Sculpt your Semester</Link>
+              <Link to="/ai-assistant" className="hover:text-purple-800 transition-colors">AI Assistant</Link>
             </nav>
             <div className="md:hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
