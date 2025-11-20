@@ -82,57 +82,197 @@ def load_index():
     """Load FAISS index, chunks CSV, and embedding model on startup."""
     global index, chunks_df, model, config
     
-    # Determine index directory path (relative to this file)
-    base_path = Path(__file__).resolve().parent
-    index_dir = base_path / "data" / "processed" / "index"
+    print("🚀 [Backend-Load] Starting index loading...")
     
+    # Get the absolute path of the current script
+    current_file = Path(__file__).resolve()
+    print(f"📁 [Backend-Load] Current script: {current_file}")
+    print(f"📁 [Backend-Load] Current working directory: {Path.cwd()}")
+    
+    # Try multiple possible data locations
+    possible_base_dirs = [
+        current_file.parent,  # Directory of app.py
+        Path.cwd(),           # Current working directory
+        Path.cwd() / "web",   # If we're in rag/ but data is in rag/web/
+    ]
+    
+    possible_data_paths = []
+    for base_dir in possible_base_dirs:
+        possible_data_paths.extend([
+            base_dir / "data" / "processed" / "index",
+            base_dir / "data" / "processed",
+            base_dir / "web" / "data" / "processed", 
+            base_dir / "processed",
+            base_dir,
+        ])
+    
+    # Remove duplicates
+    possible_data_paths = list(dict.fromkeys(possible_data_paths))
+    
+    index_dir = None
+    for data_path in possible_data_paths:
+        print(f"🔍 [Backend-Load] Checking: {data_path}")
+        if data_path.exists():
+            # Check if required files exist here
+            idx_file = data_path / "faiss.index"
+            csv_file = data_path / "chunks.csv"
+            cfg_file = data_path / "config.json"
+            
+            if idx_file.exists() and csv_file.exists() and cfg_file.exists():
+                index_dir = data_path
+                print(f"✅ [Backend-Load] Found complete data in: {data_path}")
+                break
+            else:
+                print(f"⚠️  [Backend-Load] Incomplete data in: {data_path}")
+                if data_path.exists():
+                    print(f"📁 [Backend-Load] Files in {data_path}:")
+                    for f in data_path.iterdir():
+                        print(f"   - {f.name}")
+    
+    if index_dir is None:
+        print("❌ [Backend-Load] Could not find complete data files in any location")
+        print("📁 [Backend-Load] Available directories from root:")
+        try:
+            for path in Path(".").rglob("*"):
+                if any(keyword in str(path) for keyword in ["rag", "web", "data", "processed"]):
+                    if path.is_dir():
+                        print(f"   - DIR: {path}")
+                    else:
+                        print(f"   - FILE: {path} ({path.stat().st_size} bytes)")
+        except Exception as e:
+            print(f"❌ [Backend-Load] Error scanning directories: {e}")
+        raise FileNotFoundError("Could not find complete index files")
+    
+    # Now load the files
     idx_path = index_dir / "faiss.index"
-    tbl_path = index_dir / "chunks.csv"
+    tbl_path = index_dir / "chunks.csv" 
     cfg_path = index_dir / "config.json"
     
-    if not idx_path.exists() or not tbl_path.exists() or not cfg_path.exists():
-        print(f"[app] Missing index files in {index_dir}")
-        raise FileNotFoundError(f"Missing index files in {index_dir}")
+    print(f"📁 [Backend-Load] Loading from: {index_dir}")
+    print(f"   - faiss.index: {idx_path.exists()} ({idx_path.stat().st_size if idx_path.exists() else 0} bytes)")
+    print(f"   - chunks.csv: {tbl_path.exists()} ({tbl_path.stat().st_size if tbl_path.exists() else 0} bytes)")
+    print(f"   - config.json: {cfg_path.exists()} ({cfg_path.stat().st_size if cfg_path.exists() else 0} bytes)")
     
-    print(f"[app] Loading index from {index_dir}...")
-    index = faiss.read_index(str(idx_path))
-    chunks_df = pd.read_csv(tbl_path)
-    config = json.loads(cfg_path.read_text())
-    model = SentenceTransformer(config["model"])
-    print(f"[app] Loaded index with {len(chunks_df):,} chunks")
+    try:
+        print("📥 [Backend-Load] Loading FAISS index...")
+        index = faiss.read_index(str(idx_path))
+        print(f"✅ [Backend-Load] FAISS index loaded: {index.ntotal} vectors")
+        
+        print("📥 [Backend-Load] Loading CSV data...")
+        chunks_df = pd.read_csv(tbl_path)
+        print(f"✅ [Backend-Load] CSV loaded: {len(chunks_df):,} rows, {len(chunks_df.columns)} columns")
+        print(f"📊 [Backend-Load] CSV columns: {chunks_df.columns.tolist()}")
+        
+        print("📥 [Backend-Load] Loading config...")
+        config = json.loads(cfg_path.read_text())
+        print(f"✅ [Backend-Load] Config loaded with model: {config.get('model')}")
+        
+        print("📥 [Backend-Load] Loading sentence transformer model...")
+        model = SentenceTransformer(config["model"])
+        print(f"✅ [Backend-Load] Model loaded: {config['model']}")
+        
+        print("🎉 [Backend-Load] All components loaded successfully!")
+        
+    except Exception as e:
+        print(f"❌ [Backend-Load] Failed to load components: {e}")
+        import traceback
+        print(f"❌ [Backend-Load] Traceback: {traceback.format_exc()}")
+        raise
 
 def retrieve_and_group(query: str, top_courses: int = 8):
     """Retrieve top courses based on query using RAG."""
     
+    print(f"🔍 [Backend-RAG] Starting retrieval for: '{query}'")
+    
     if index is None or model is None:
+        print("❌ [Backend-RAG] Index or model not available")
+        return []
+    
+    # Check if chunks_df is loaded and has data
+    print(f"📊 [Backend-RAG] chunks_df type: {type(chunks_df)}")
+    print(f"📊 [Backend-RAG] chunks_df shape: {chunks_df.shape if chunks_df is not None else 'None'}")
+    if chunks_df is not None and len(chunks_df) > 0:
+        print(f"📊 [Backend-RAG] chunks_df columns: {chunks_df.columns.tolist()}")
+        print(f"📊 [Backend-RAG] First few rows sample:")
+        print(chunks_df.head(3))
+    else:
+        print("❌ [Backend-RAG] chunks_df is empty or None")
         return []
     
     # Expand query
     q_expanded = expand_query(query)
+    print(f"🔍 [Backend-RAG] Original query: '{query}'")
+    print(f"🔍 [Backend-RAG] Expanded query: '{q_expanded}'")
     
     # Encode and search
-    q_emb = model.encode([q_expanded], normalize_embeddings=True).astype("float32")
+    print("🔍 [Backend-Road] Encoding query...")
+    try:
+        q_emb = model.encode([q_expanded], normalize_embeddings=True).astype("float32")
+        print(f"🔍 [Backend-RAG] Query embedding shape: {q_emb.shape}")
+    except Exception as e:
+        print(f"❌ [Backend-RAG] Encoding failed: {e}")
+        return []
+    
     chunk_k = max(50, top_courses * 5)
-    scores, idxs = index.search(q_emb, chunk_k)
+    print(f"🔍 [Backend-RAG] Searching index with k={chunk_k}...")
+    
+    try:
+        scores, idxs = index.search(q_emb, chunk_k)
+        print(f"🔍 [Backend-RAG] Search completed. Scores: {scores.shape}, Indices: {idxs.shape}")
+        print(f"🔍 [Backend-RAG] Top 5 scores: {scores[0][:5]}")
+        print(f"🔍 [Backend-RAG] Top 5 indices: {idxs[0][:5]}")
+    except Exception as e:
+        print(f"❌ [Backend-RAG] Search failed: {e}")
+        return []
+    
     idxs = idxs[0].tolist()
     scores = scores[0].tolist()
+    
+    print(f"🔍 [Backend-RAG] Found {len(idxs)} initial chunks")
+    print(f"🔍 [Backend-RAG] Score range: min={min(scores):.4f}, max={max(scores):.4f}")
+    
+    # Check if we have any valid indices
+    valid_indices = [idx for idx in idxs if idx < len(chunks_df)]
+    print(f"🔍 [Backend-RAG] Valid indices: {len(valid_indices)}/{len(idxs)}")
+    
+    if not valid_indices:
+        print("❌ [Backend-RAG] No valid indices found")
+        return []
     
     # Get matching chunks
     res_df = chunks_df.iloc[idxs].copy()
     res_df.insert(0, "score", scores)
     
-    # Group by course (parent_id) and get best chunk per course
+    print(f"📊 [Backend-RAG] res_df shape: {res_df.shape}")
+    print(f"📊 [Backend-RAG] res_df columns: {res_df.columns.tolist()}")
+    
+    # Check for required columns
     if "metadata.parent_id" not in res_df.columns:
+        print("⚠️ [Backend-RAG] 'metadata.parent_id' column not found, using 'id' instead")
         res_df["metadata.parent_id"] = res_df["id"]
     
-    best = (
-        res_df
-        .sort_values("score", ascending=False)
-        .drop_duplicates(subset=["metadata.parent_id"], keep="first")
-        .copy()
-    )
+    print("🔍 [Backend-RAG] Grouping results by course...")
     
-    top = best.head(top_courses).copy()
+    # Check if we have any data to group
+    if len(res_df) == 0:
+        print("❌ [Backend-RAG] No data in res_df after search")
+        return []
+    
+    try:
+        best = (
+            res_df
+            .sort_values("score", ascending=False)
+            .drop_duplicates(subset=["metadata.parent_id"], keep="first")
+            .copy()
+        )
+        print(f"🔍 [Backend-RAG] After grouping: {len(best)} unique courses")
+        
+        top = best.head(top_courses).copy()
+        print(f"🔍 [Backend-RAG] After head({top_courses}): {len(top)} courses")
+        
+    except Exception as e:
+        print(f"❌ [Backend-RAG] Grouping failed: {e}")
+        return []
     
     # Extract fields safely
     def safe_get(row, col, default=""):
@@ -140,12 +280,19 @@ def retrieve_and_group(query: str, top_courses: int = 8):
         return str(val) if pd.notna(val) else default
     
     results = []
-    for _, row in top.iterrows():
+    for i, (_, row) in enumerate(top.iterrows()):
         course_code = safe_get(row, "metadata.course_code")
         class_name = safe_get(row, "metadata.class_name")
         subject = safe_get(row, "metadata.subject") or safe_get(row, "metadata.subject_code")
         text = safe_get(row, "text")
         score = float(row["score"]) if "score" in row else 0.0
+        
+        print(f"📚 [Backend-RAG] Result {i+1}:")
+        print(f"   - Course code: '{course_code}'")
+        print(f"   - Class name: '{class_name}'")
+        print(f"   - Subject: '{subject}'")
+        print(f"   - Score: {score:.3f}")
+        print(f"   - Text preview: '{text[:100] if text else ''}...'")
         
         results.append({
             "course_code": course_code,
@@ -155,12 +302,67 @@ def retrieve_and_group(query: str, top_courses: int = 8):
             "score": score
         })
     
+    print(f"✅ [Backend-RAG] Returning {len(results)} formatted results")
     return results
 
 @app.route("/")
 def home():
     """Health check endpoint."""
     return jsonify({"status": "ok", "message": "Schedule Sculptor RAG API is running"})
+
+@app.route("/health")
+def health_check():
+    """Detailed health check endpoint."""
+    health_info = {
+        "status": "ok" if index is not None else "error",
+        "index_loaded": index is not None,
+        "model_loaded": model is not None, 
+        "chunks_loaded": chunks_df is not None,
+        "chunks_count": len(chunks_df) if chunks_df is not None else 0,
+        "index_size": index.ntotal if index is not None else 0
+    }
+    return jsonify(health_info)
+
+@app.route("/check-files")
+def check_files():
+    """Check if data files exist in expected locations."""
+    import os
+    from pathlib import Path
+    
+    # Check multiple possible locations
+    check_paths = [
+        Path("web/data/processed/index"),  # If root is rag/
+        Path("web/data/processed"),        # If root is rag/
+        Path("data/processed/index"),      # If files are in rag/data/processed/index
+        Path(".") / "data" / "processed" / "index",  # Current dir data
+        Path(".") / "data" / "processed",           # Current dir data
+        Path(__file__).resolve().parent / "data" / "processed" / "index",  # Script relative
+        Path(__file__).resolve().parent / "data" / "processed",           # Script relative
+    ]
+    
+    results = {}
+    for path in check_paths:
+        results[str(path)] = {
+            "exists": path.exists(),
+            "files": []
+        }
+        if path.exists():
+            for file in path.iterdir():
+                results[str(path)]["files"].append({
+                    "name": file.name,
+                    "size": file.stat().st_size if file.is_file() else "dir",
+                    "is_file": file.is_file()
+                })
+    
+    return jsonify({
+        "current_directory": str(Path.cwd()),
+        "script_directory": str(Path(__file__).resolve().parent),
+        "environment_variables": {
+            "RENDER": os.environ.get('RENDER'),
+            "PORT": os.environ.get('PORT'),
+        },
+        "file_checks": results
+    })
 
 @app.route("/query", methods=["POST"])
 def query():
@@ -216,8 +418,11 @@ def query():
 if __name__ == "__main__":
     try:
         load_index()
+        print("✅ [Backend] Index loading completed successfully")
     except Exception as e:
-        print(f"[app] Failed to load index: {e}")
+        print(f"❌ [Backend] Failed to load index: {e}")
+        import traceback
+        print(f"❌ [Backend] Traceback: {traceback.format_exc()}")
         index = chunks_df = model = config = None
 
     # Read port from environment so frontend and backend can be started on the same port.
