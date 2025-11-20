@@ -138,3 +138,6 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 frontend/src/lib/test_audit.pdf
+
+rag/web/venv
+rag/web/__pycache__
