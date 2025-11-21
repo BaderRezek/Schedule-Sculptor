@@ -5,11 +5,10 @@ import pdfWorker from "pdfjs-dist/legacy/build/pdf.worker.min.js?url";
 import { GoogleGenAI } from "@google/genai";
 
 // use Vite to load environment variables
-const GEMINI_API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
+const GEMINI_API_KEY = import.meta.env.GOOGLE_API_KEY;
 
 // set the worker for pdfjs
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
-
 
 /**
     * Calls the Gemini API with the extracted text and a master prompt.
